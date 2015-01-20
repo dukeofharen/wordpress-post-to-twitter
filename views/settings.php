@@ -42,6 +42,11 @@ $(document).ready(function(){
 		<a href="#" class="button button-primary" id="test_twitter_button">Test</a><br />
 		<?php echo test_social_media(); ?>
 	</p>
+	
+	<p>
+		Send URL with Tweet<br />
+		<input type="checkbox" name="smc_send_url" value="1"<?php echo (esc_attr( get_option('smc_send_url') ) === "1" ? " checked" : ""); ?> />
+	</p>
     
     <?php submit_button(); ?>
 

@@ -8,6 +8,7 @@
  * Author URI: http://duco.cc
  * License: x
  */
+ 
 defined('ABSPATH') or die("No script kiddies please!");
 
 $smc_path = plugin_dir_path(__FILE__);
@@ -37,6 +38,7 @@ function register_mysettings() {
 		register_setting( 'smc-settings-group', 'smc_twitter_consumer_secret' );
 		register_setting( 'smc-settings-group', 'smc_twitter_access_token' );
 		register_setting( 'smc-settings-group', 'smc_twitter_access_token_secret' );
+		register_setting( 'smc-settings-group', 'smc_send_url' );
 	}
 }
 
@@ -64,25 +66,29 @@ function smc_twitter_metabox($post){
 
 function smc_post_to_twitter($post_id){
 	$post = get_post($post_id);
-	$path = null;
-	if(isset($_POST["check_post_to_twitter"]) && $_POST["check_post_to_twitter"] == "1"){
-		if(isset($_POST["twitter_send_featured_image"]) && $_POST["twitter_send_featured_image"] == "1"){
-			$path = smc_get_fi_path($post_id);
+	if(get_post_status($post_id) === "publish"){
+		$path = null;
+		if(isset($_POST["check_post_to_twitter"]) && $_POST["check_post_to_twitter"] == "1"){
+			if(isset($_POST["twitter_send_featured_image"]) && $_POST["twitter_send_featured_image"] == "1"){
+				$path = smc_get_fi_path($post_id);
+			}
+			$text = isset($_POST['twitter_tweet_text']) ? $_POST['twitter_tweet_text'] : "";
+			if($text == ""){
+				$text = $post->post_title;
+			}
+			if(get_option('smc_send_url') == "1"){
+				$text .= " ".get_permalink($post_id);
+			}
+			$reply = smc_twitter_post($text, $path);
+			$message = "";
+			if(isset($reply->httpstatus) && $reply->httpstatus == 200){
+				$message = "The tweet has been sent succesfully on ".date("Y-m-d G:i:s");
+			}
+			else if(isset($reply->errors[0]->message)){
+				$message = $reply->errors[0]->message;
+			}
+			update_post_meta($post_id, "smc_twitter_message", $message);
 		}
-		$text = isset($_POST['twitter_tweet_text']) ? $_POST['twitter_tweet_text'] : "";
-		if($text == ""){
-			$text = $post->post_title;
-		}
-		$text .= " ".get_permalink($post_id);
-		$reply = smc_twitter_post($text, $path);
-		$message = "";
-		if(isset($reply->httpstatus) && $reply->httpstatus == 200){
-			$message = "The tweet has been sent succesfully on ".date("Y-m-d G:i:s");
-		}
-		else if(isset($reply->errors[0]->message)){
-			$message = $reply->errors[0]->message;
-		}
-		update_post_meta($post_id, "smc_twitter_message", $message);
 	}
 }
 
